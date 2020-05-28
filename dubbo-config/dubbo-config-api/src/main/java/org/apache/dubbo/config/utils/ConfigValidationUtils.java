@@ -170,8 +170,10 @@ public class ConfigValidationUtils {
         // check && override if necessary
         List<URL> registryList = new ArrayList<URL>();
         ApplicationConfig application = interfaceConfig.getApplication();
+        //拿到注册中心的配置 例如zookeeper:127.0.0.1:2181
         List<RegistryConfig> registries = interfaceConfig.getRegistries();
         if (CollectionUtils.isNotEmpty(registries)) {
+            //多注册中心支持
             for (RegistryConfig config : registries) {
                 String address = config.getAddress();
                 if (StringUtils.isEmpty(address)) {
@@ -196,6 +198,8 @@ public class ConfigValidationUtils {
                                 .build();
                         if ((provider && url.getParameter(REGISTER_KEY, true))
                                 || (!provider && url.getParameter(SUBSCRIBE_KEY, true))) {
+                            //这里最终会构造出一个注册中心的url
+                            //registry://127.0.0.1:2181/org.apache.dubbo.registry.RegistryService?application=demo-provider&dubbo=2.0.2&metadata-type=remote&pid=18255&qos.port=22222&registry=zookeeper&timestamp=1590638030940
                             registryList.add(url);
                         }
                     }

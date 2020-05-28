@@ -736,19 +736,17 @@ public class DubboBootstrap extends GenericEventListener {
     }
 
     /**
-     * Start the bootstrap
+     * 在spring启动后 Spring会调用该方法启动dubbo 消费者
      */
     public DubboBootstrap start() {
+        //通过cas判断是否已经启动了
         if (started.compareAndSet(false, true)) {
             ready.set(false);
+            //一些初始化工作 加载配置信息
             initialize();
-            if (logger.isInfoEnabled()) {
-                logger.info(NAME + " is starting...");
-            }
-            // 1. export Dubbo Services
+            // 导出dubbo服务
             exportServices();
 
-            // Not only provider register
             if (!isOnlyRegisterProvider() || hasExportedServices()) {
                 // 2. export MetadataService
                 exportMetadataService();
@@ -927,6 +925,7 @@ public class DubboBootstrap extends GenericEventListener {
     }
 
     private void exportServices() {
+        //遍历所有配置的服务 dubbo:service 每一个service对应一个ServiceConfig
         configManager.getServices().forEach(sc -> {
             // TODO, compatible with ServiceConfig.export()
             ServiceConfig serviceConfig = (ServiceConfig) sc;
@@ -940,6 +939,7 @@ public class DubboBootstrap extends GenericEventListener {
                 });
                 asyncExportingFutures.add(future);
             } else {
+                //调用ServiceConfig.export()方法进行导出
                 sc.export();
                 exportedServices.add(sc);
             }

@@ -181,6 +181,7 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
     }
 
     public synchronized void export() {
+        //前置校验
         if (!shouldExport()) {
             return;
         }
@@ -189,10 +190,10 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
             bootstrap = DubboBootstrap.getInstance();
             bootstrap.init();
         }
-
+        //检查配置正确性
         checkAndUpdateSubConfigs();
 
-        //init serviceMetadata
+        //初始化 serviceMetadata
         serviceMetadata.setVersion(getVersion());
         serviceMetadata.setGroup(getGroup());
         serviceMetadata.setDefaultGroup(getGroup());
@@ -200,6 +201,7 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
         serviceMetadata.setServiceInterfaceName(getInterface());
         serviceMetadata.setTarget(getRef());
 
+        //延迟导出
         if (shouldDelay()) {
             DELAY_EXPORT_EXECUTOR.schedule(this::doExport, getDelay(), TimeUnit.MILLISECONDS);
         } else {
@@ -303,7 +305,9 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
     @SuppressWarnings({"unchecked", "rawtypes"})
     private void doExportUrls() {
         ServiceRepository repository = ApplicationModel.getServiceRepository();
+        //将当前service 例如DemoService注册到Repository中去
         ServiceDescriptor serviceDescriptor = repository.registerService(getInterfaceClass());
+        //将DemoService注册为一个provider
         repository.registerProvider(
                 getUniqueServiceName(),
                 ref,
@@ -312,8 +316,10 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
                 serviceMetadata
         );
 
+        //加载注册中心信息
         List<URL> registryURLs = ConfigValidationUtils.loadRegistries(this, true);
 
+        //多协议导出
         for (ProtocolConfig protocolConfig : protocols) {
             String pathKey = URL.buildKey(getContextPath(protocolConfig)
                     .map(p -> p + "/" + path)
@@ -333,8 +339,11 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
         }
 
         Map<String, String> map = new HashMap<String, String>();
+        //构建生产者url
+        //设置为生产者
         map.put(SIDE_KEY, PROVIDER_SIDE);
 
+        //设置服务版本
         ServiceConfig.appendRuntimeParameters(map);
         AbstractConfig.appendParameters(map, getMetrics());
         AbstractConfig.appendParameters(map, getApplication());
@@ -485,10 +494,13 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
                         if (StringUtils.isNotEmpty(proxy)) {
                             registryURL = registryURL.addParameter(PROXY_KEY, proxy);
                         }
-
+                        //url组装好后 dubbo://10.10.47.45:20880/org.apache.dubbo.demo.DemoService?anyhost=true&application=demo-provider&bind.ip=10.10.47.45&bind.port=20880&deprecated=false&dubbo=2.0.2&dynamic=true&generic=false&interface=org.apache.dubbo.demo.DemoService&metadata-type=remote&methods=sayHello,sayHelloAsync&pid=57299&qos.port=22222&release=&side=provider&timestamp=1590652019527
+                        //invoker是根据javassist动态生成的字节码 可以根据传入的方法名称和参数调用对应的实现类中的方法
                         Invoker<?> invoker = PROXY_FACTORY.getInvoker(ref, (Class) interfaceClass, registryURL.addParameterAndEncoded(EXPORT_KEY, url.toFullString()));
+                        //再包装一层 将元数据信息也一起包装进去
                         DelegateProviderMetaDataInvoker wrapperInvoker = new DelegateProviderMetaDataInvoker(invoker, this);
 
+                        //根据扩展点加载到对应的Protocol实现类 默认是Dubbo协议实现 调用DubboProtocol.export(wrapperInvoker)
                         Exporter<?> exporter = PROTOCOL.export(wrapperInvoker);
                         exporters.add(exporter);
                     }
