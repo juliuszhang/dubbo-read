@@ -189,16 +189,18 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
             bootstrap = DubboBootstrap.getInstance();
             bootstrap.init();
         }
-
+        //配置校验
         checkAndUpdateSubConfigs();
 
         checkStubAndLocal(interfaceClass);
         ConfigValidationUtils.checkMock(interfaceClass, this);
 
         Map<String, String> map = new HashMap<String, String>();
+        //设置为服务消费端
         map.put(SIDE_KEY, CONSUMER_SIDE);
 
         ReferenceConfigBase.appendRuntimeParameters(map);
+        //检测是否为泛化接口
         if (!ProtocolUtils.isGeneric(generic)) {
             String revision = Version.getVersion(interfaceClass, version);
             if (revision != null && revision.length() > 0) {
@@ -254,7 +256,7 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
         map.put(REGISTER_IP_KEY, hostToRegistry);
 
         serviceMetadata.getAttachments().putAll(map);
-
+        //主要看创建代理对象的方法
         ref = createProxy(map);
 
         serviceMetadata.setTarget(ref);
@@ -298,6 +300,8 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
                 // if protocols not injvm checkRegistry
                 if (!LOCAL_PROTOCOL.equalsIgnoreCase(getProtocol())) {
                     checkRegistry();
+                    //查询到对应的注册中心信息
+                    //registry://127.0.0.1:2181/org.apache.dubbo.registry.RegistryService?application=demo-consumer&dubbo=2.0.2&pid=19279&qos.port=33333&registry=zookeeper&timestamp=1590661811973
                     List<URL> us = ConfigValidationUtils.loadRegistries(this, false);
                     if (CollectionUtils.isNotEmpty(us)) {
                         for (URL u : us) {

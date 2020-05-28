@@ -467,14 +467,18 @@ public class RegistryProtocol implements Protocol {
         directory.setProtocol(protocol);
         // all attributes of REFER_KEY
         Map<String, String> parameters = new HashMap<String, String>(directory.getConsumerUrl().getParameters());
+        //生成消费者链接
         URL subscribeUrl = new URL(CONSUMER_PROTOCOL, parameters.remove(REGISTER_IP_KEY), 0, type.getName(), parameters);
         if (directory.isShouldRegister()) {
             directory.setRegisteredConsumerUrl(subscribeUrl);
+            //注册消费者
             registry.register(directory.getRegisteredConsumerUrl());
         }
         directory.buildRouterChain(subscribeUrl);
+        // 订阅 providers、configurators、routers 等节点数据
         directory.subscribe(toSubscribeUrl(subscribeUrl));
 
+        // 一个注册中心可能有多个服务提供者，因此这里需要将多个服务提供者合并为一个
         Invoker<T> invoker = cluster.join(directory);
         List<RegistryProtocolListener> listeners = findRegistryProtocolListeners(url);
         if (CollectionUtils.isEmpty(listeners)) {

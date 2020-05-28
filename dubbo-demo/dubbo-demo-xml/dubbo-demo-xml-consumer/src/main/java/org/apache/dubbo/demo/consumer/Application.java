@@ -33,5 +33,6 @@ public class Application {
         DemoService demoService = context.getBean("demoService", DemoService.class);
         String world = demoService.sayHello("world");
         System.out.println("result: " + world);
+        System.in.read();
     }
 }
