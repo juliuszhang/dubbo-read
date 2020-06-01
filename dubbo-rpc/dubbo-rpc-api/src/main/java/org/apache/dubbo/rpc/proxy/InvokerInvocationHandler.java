@@ -62,6 +62,7 @@ public class InvokerInvocationHandler implements InvocationHandler {
         } else if (parameterTypes.length == 1 && "equals".equals(methodName)) {
             return invoker.equals(args[0]);
         }
+        //当调用DemoService对应的方法时 会调用到对应的invoker的方法 这里给封装成了一个RpcInvocation调用
         RpcInvocation rpcInvocation = new RpcInvocation(method, invoker.getInterface().getName(), args);
         String serviceKey = invoker.getUrl().getServiceKey();
         rpcInvocation.setTargetServiceUniqueName(serviceKey);
@@ -71,6 +72,7 @@ public class InvokerInvocationHandler implements InvocationHandler {
             rpcInvocation.put(Constants.METHOD_MODEL, consumerModel.getMethodModel(method));
         }
 
+        //默认这里的invoker走的是MockClusterInvoker
         return invoker.invoke(rpcInvocation).recreate();
     }
 }

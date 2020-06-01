@@ -139,8 +139,10 @@ public abstract class AbstractInvoker<T> implements Invoker<T> {
                     + ", dubbo version is " + Version.getVersion() + ", this invoker should not be used any longer");
         }
         RpcInvocation invocation = (RpcInvocation) inv;
+        //设置invoker
         invocation.setInvoker(this);
         if (CollectionUtils.isNotEmptyMap(attachment)) {
+            //设置attachement
             invocation.addObjectAttachmentsIfAbsent(attachment);
         }
 
@@ -155,11 +157,13 @@ public abstract class AbstractInvoker<T> implements Invoker<T> {
             invocation.addObjectAttachments(contextAttachments);
         }
 
+        //设置调用方式 同步/异步/带返回值future
         invocation.setInvokeMode(RpcUtils.getInvokeMode(url, invocation));
         RpcUtils.attachInvocationIdIfAsync(getUrl(), invocation);
 
         AsyncRpcResult asyncResult;
         try {
+            //由子类实现 默认是DubboInvoker
             asyncResult = (AsyncRpcResult) doInvoke(invocation);
         } catch (InvocationTargetException e) { // biz exception
             Throwable te = e.getTargetException();

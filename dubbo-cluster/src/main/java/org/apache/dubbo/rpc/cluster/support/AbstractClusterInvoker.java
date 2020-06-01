@@ -164,6 +164,7 @@ public abstract class AbstractClusterInvoker<T> implements Invoker<T> {
         if (CollectionUtils.isEmpty(invokers)) {
             return null;
         }
+        //只有一个生产者的情况下就不走select逻辑
         if (invokers.size() == 1) {
             return invokers.get(0);
         }
@@ -254,8 +255,10 @@ public abstract class AbstractClusterInvoker<T> implements Invoker<T> {
         }
 
         List<Invoker<T>> invokers = list(invocation);
+        //通过LoadBalance对象去选择该调用哪一个服务节点 默认是
         LoadBalance loadbalance = initLoadBalance(invokers, invocation);
         RpcUtils.attachInvocationIdIfAsync(getUrl(), invocation);
+        //默认当前类是 org.apache.dubbo.rpc.cluster.support.FailoverClusterInvoker
         return doInvoke(invocation, invokers, loadbalance);
     }
 

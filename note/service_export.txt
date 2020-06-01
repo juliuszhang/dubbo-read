@@ -1,0 +1,25 @@
+1.服务导出
+  (1)通过DubboBootStrap类的start方法启动
+  (2)遍历所有配置的服务ServiceConfig dubbo:service 每一个dubbo:service对应一个ServiceConfig
+  (3)导出ServiceConfig的过程
+  for(ServiceConfig: ServiceConfigs) {
+     (a)加载注册中心信息
+     (b)针对每一个注册中心的每一种协议都要导出一次
+     for(协议：协议s) {
+        (c)拼装url
+        (d)根据url构造Invoker对象
+        (e)根据上面构造出的Invoker导出对Exporter
+        (f)导出的过程开启netty服务对ip和端口进行监听，并为这个url创建一个executor对象
+     }
+  }
+
+
+2.服务引入
+  (1)通过ReferenceBean.getObject进行懒加载ReferenceBean是一个FactoryBean对象
+  (2)初始化校验，初始化参数赋值工作
+  (3)构建invoker invoker是由protocol构建而来 其中DubboProtocol里面主要负责了根据nettyclient的创建 RegistryProtocol主要负责注册消费者以及订阅providers、configurators、routers等信息
+  此外RegistryProtocol还会将多个Invoker包装成一个Cluster
+
+3.dubbo服务调用过程
+  (1)根据代理调用MockClusterInvoker MockClusterInvoker 内部封装了服务降级逻辑
+  (2)
